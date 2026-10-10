@@ -5,6 +5,14 @@ All notable changes to OpenFluxDesktop. Format loosely follows
 
 ## [Unreleased]
 
+## [2.11.1] - 2026-10-10 (meepo161/OpenFluxDesktop)
+
+### Fixed
+
+- Node wizard: after changing the documents of a channel already on the
+  server, the done step names that channel and its port (it showed the new
+  channel the wizard had prepared, port 0).
+
 ## [2.11.0] - 2026-10-10 (meepo161/OpenFluxDesktop)
 
 ### Added
