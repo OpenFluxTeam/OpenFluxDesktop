@@ -1,5 +1,7 @@
 package io.openflux.desktop
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.toAwtImage
 import androidx.compose.ui.test.ExperimentalTestApi
@@ -9,6 +11,8 @@ import androidx.compose.ui.test.getBoundsInRoot
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.onFirst
+import androidx.compose.ui.test.onLast
 import androidx.compose.ui.test.isRoot
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performSemanticsAction
@@ -92,6 +96,188 @@ class DemoRecorder {
             scene(File(base, "profiles"), platform) { import() }
             scene(File(base, "node"), platform) { node() }
             scene(File(base, "logs"), platform) { logs() }
+        }
+    }
+
+    /**
+     * Only the "без сервера" wizard, driven through its model (no typing): one PNG per step.
+     * OPENFLUX_DEMO_PHP=<dir> ./gradlew :desktopApp:test --tests '*DemoRecorder.recordPhp'
+     */
+    @Test
+    fun recordPhp() {
+        val out = System.getenv("OPENFLUX_DEMO_PHP") ?: return
+        for (platform in listOf(PlatformKind.Desktop, PlatformKind.Android)) {
+            val dir = File(File(out, platform.name.lowercase()), "php").apply { deleteRecursively(); mkdirs() }
+            val demo = Demo(platform)
+            val desktop = platform == PlatformKind.Desktop
+            val scope = kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.SupervisorJob() + kotlinx.coroutines.Dispatchers.Default)
+            val model = io.openflux.desktop.ui.node.PhpWizardModel(demo.container, scope)
+            runSkikoComposeUiTest(size = if (desktop) Size(1100f, 900f) else Size(412f, 900f), density = Density(1f)) {
+                mainClock.autoAdvance = false
+                setContent {
+                    io.openflux.desktop.ui.theme.OpenFluxTheme(dark = desktop, touch = !desktop) {
+                        androidx.compose.runtime.CompositionLocalProvider(
+                            io.openflux.desktop.ui.LocalTouchUi provides !desktop,
+                            io.openflux.desktop.service.LocalAppContainer provides demo.container,
+                            io.openflux.desktop.ui.components.LocalToaster provides io.openflux.desktop.ui.components.Toaster(),
+                            io.openflux.desktop.ui.LocalScrollbars provides NoScrollbars,
+                        ) {
+                            androidx.compose.foundation.layout.Box(
+                                androidx.compose.ui.Modifier.fillMaxSize().background(io.openflux.desktop.ui.theme.AppTheme.colors.background),
+                            ) { io.openflux.desktop.ui.node.PhpWizardPane(model, onClose = {}, onSaved = {}) }
+                        }
+                    }
+                }
+                var n = 0
+                fun shot(name: String) {
+                    repeat(3) { mainClock.advanceTimeBy(80); Thread.sleep(15) }
+                    ImageIO.write(captureToImage().toAwtImage(), "png", File(dir, "%02d-%s.png".format(n++, name)))
+                }
+                fun waitFor(ms: Long = 20_000, cond: () -> Boolean) {
+                    val end = System.currentTimeMillis() + ms
+                    while (!cond() && System.currentTimeMillis() < end) { mainClock.advanceTimeBy(80); Thread.sleep(40) }
+                }
+                shot("hosting-empty")
+                model.usePreset(0)
+                model.ftpUser = "if0_38012345"
+                model.ftpPassword = "demo-password"
+                model.siteInput = "openflux-demo.42web.io"
+                shot("hosting-filled")
+                model.probeHosting()
+                waitFor { model.step == io.openflux.desktop.ui.node.PhpStep.Channel }
+                shot("channel-cups")
+                model.carrier = TransportType.MAILRU
+                shot("channel-mailru")
+                model.carrier = TransportType.CUPSONLINE
+                model.prepareChannel()
+                waitFor { model.step == io.openflux.desktop.ui.node.PhpStep.Install }
+                shot("install-ready")
+                model.install()
+                waitFor(5_000) { model.progress != null }
+                shot("install-uploading")
+                waitFor { model.step == io.openflux.desktop.ui.node.PhpStep.Verify || model.step == io.openflux.desktop.ui.node.PhpStep.Done }
+                shot("verify")
+                waitFor { model.step == io.openflux.desktop.ui.node.PhpStep.Done }
+                shot("done")
+            }
+        }
+    }
+
+    /**
+     * The Transports tab with a script that has settings, and the settings dialog: one PNG each.
+     * OPENFLUX_DEMO_SCRIPTS=<dir> ./gradlew :desktopApp:test --tests '*DemoRecorder.recordScripts'
+     */
+    @Test
+    fun recordScripts() {
+        val out = System.getenv("OPENFLUX_DEMO_SCRIPTS") ?: return
+        for (platform in listOf(PlatformKind.Desktop, PlatformKind.Android)) {
+            val dir = File(File(out, platform.name.lowercase()), "scripts").apply { deleteRecursively(); mkdirs() }
+            val demo = Demo(platform)
+            val desktop = platform == PlatformKind.Desktop
+            val repo = io.openflux.desktop.service.InMemoryScriptRepository().apply {
+                upsert(
+                    io.openflux.desktop.model.InstalledScript(
+                        id = "my-transport", name = "Мой транспорт", version = "1.3.0", pubkeyHex = "aa", fingerprint = "ab".repeat(32),
+                        fileName = "my-transport.flux", source = io.openflux.desktop.model.ScriptSource.GitHub,
+                        params = listOf(
+                            io.openflux.desktop.model.ScriptParam("url", "Ссылка", "url", true, scope = "profile"),
+                            io.openflux.desktop.model.ScriptParam("token", "API-токен", "secret", true, scope = "settings"),
+                            io.openflux.desktop.model.ScriptParam("retries", "Число повторов", "number", scope = "settings", default = "3"),
+                            io.openflux.desktop.model.ScriptParam("compress", "Сжимать", "boolean", scope = "settings"),
+                        ),
+                    ),
+                )
+                upsert(
+                    io.openflux.desktop.model.InstalledScript(
+                        id = "mailru", name = "mailru", version = "1.1.0", pubkeyHex = "bb", fingerprint = "cd".repeat(32),
+                        fileName = "mailru.js", official = true, source = io.openflux.desktop.model.ScriptSource.Bundled,
+                        params = listOf(io.openflux.desktop.model.ScriptParam("url", "Ссылка", "url", true)),
+                    ),
+                )
+            }
+            val platformWithSettings = object : PlatformServices by demo.platform {
+                override fun scriptSettings(data: ByteArray, sig: ByteArray, pubkeyHex: String, valuesJson: String, lang: String) =
+                    """{"ok":false,"code":"bad_signature","error":"x"}"""
+            }
+            val container = AppContainer(
+                demo.profiles, demo.settings, demo.connection, platformWithSettings, demo.codec, DemoNode(demo.codec),
+                Accounts(FileAccountRepository(java.nio.file.Files.createTempDirectory("demo-accounts").toFile()), KcefAccountBrowser(), HttpSessionProbe(), System::currentTimeMillis,
+                    kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.SupervisorJob() + kotlinx.coroutines.Dispatchers.Default)),
+                phpHosting = DemoPhp(), scripts = repo,
+            )
+            runSkikoComposeUiTest(size = if (desktop) Size(1100f, 900f) else Size(412f, 900f), density = Density(1f)) {
+                mainClock.autoAdvance = false
+                setContent {
+                    io.openflux.desktop.ui.theme.OpenFluxTheme(dark = desktop, touch = !desktop) {
+                        androidx.compose.runtime.CompositionLocalProvider(
+                            io.openflux.desktop.ui.LocalTouchUi provides !desktop,
+                            io.openflux.desktop.service.LocalAppContainer provides container,
+                            io.openflux.desktop.ui.components.LocalToaster provides io.openflux.desktop.ui.components.Toaster(),
+                            io.openflux.desktop.ui.LocalScrollbars provides NoScrollbars,
+                        ) {
+                            androidx.compose.foundation.layout.Box(
+                                androidx.compose.ui.Modifier.fillMaxSize().background(io.openflux.desktop.ui.theme.AppTheme.colors.background),
+                            ) {
+                                io.openflux.desktop.ui.scripts.ScriptsScreen(container)
+                                io.openflux.desktop.ui.shell.ScriptSettingsDialog()
+                            }
+                        }
+                    }
+                }
+                fun shot(name: String) {
+                    repeat(4) { mainClock.advanceTimeBy(80); Thread.sleep(15) }
+                    ImageIO.write(captureToImage().toAwtImage(), "png", File(dir, "$name.png"))
+                }
+                shot("1-list")
+                onAllNodesWithText("Настройки").onFirst().performClick()
+                Thread.sleep(300)
+                shot("2-dialog-error")
+            }
+        }
+    }
+
+    /**
+     * The whole app with the experimental features off (the default) and on: the «Транспорты» tab is not
+     * there until they are turned on, and the Settings page that turns them on. One PNG each; the
+     * assertions run whenever the test does.
+     * OPENFLUX_DEMO_EXPERIMENTAL=<dir> ./gradlew :desktopApp:test --tests '*DemoRecorder.recordExperimental'
+     */
+    @Test
+    fun recordExperimental() {
+        val out = System.getenv("OPENFLUX_DEMO_EXPERIMENTAL") ?: return
+        listOf(HomeTab, ProfilesTab, LogsTab, SettingsTab).forEach(ScreenModelStore::onDispose)
+        val dir = File(out, "experimental").apply { deleteRecursively(); mkdirs() }
+        val demo = Demo(PlatformKind.Desktop)
+        runSkikoComposeUiTest(size = Size(1100f, 760f), density = Density(1f)) {
+            mainClock.autoAdvance = false
+            setContent { OpenFluxApp(demo.container, NoScrollbars, Shortcuts()) }
+            fun shot(name: String) {
+                repeat(6) { mainClock.advanceTimeBy(80); Thread.sleep(15) }
+                ImageIO.write(captureToImage().toAwtImage(), "png", File(dir, "$name.png"))
+            }
+            repeat(8) { mainClock.advanceTimeBy(80) }
+            // The sidebar's entries are on the left; "Транспорты" is also a row of the Home screen's details.
+            fun sidebarHas(title: String) = onAllNodesWithText(title).fetchSemanticsNodes().any { it.boundsInRoot.left < 300f }
+            // Off by default: the sidebar has Главная, Профили, Логи, Настройки, and no Транспорты.
+            check(!demo.settings.settings.value.experimental)
+            check(sidebarHas("Профили") && !sidebarHas("Транспорты")) { "the Transports tab is there by default" }
+            shot("1-off-home")
+            onAllNodesWithText("Настройки").onFirst().performClick()
+            repeat(8) { mainClock.advanceTimeBy(80) }
+            onAllNodesWithText("Экспериментальные функции").onFirst().performClick()
+            repeat(8) { mainClock.advanceTimeBy(80) }
+            shot("2-off-settings")
+            // The switch turns it on: the tab appears.
+            onAllNodesWithText("Экспериментальные функции").onLast().performClick()
+            repeat(8) { mainClock.advanceTimeBy(80) }
+            check(demo.settings.settings.value.experimental) { "the switch did not turn the features on" }
+            check(sidebarHas("Транспорты")) { "the Transports tab did not appear" }
+            shot("3-on-settings")
+            // And off again.
+            onAllNodesWithText("Экспериментальные функции").onLast().performClick()
+            repeat(8) { mainClock.advanceTimeBy(80) }
+            check(!demo.settings.settings.value.experimental)
+            check(!sidebarHas("Транспорты")) { "the Transports tab stayed after the features were turned off" }
         }
     }
 
@@ -260,6 +446,26 @@ class DemoRecorder {
             hold(18)
         }
 
+        fun phpNode() {
+            tap("Профили", after = 3)
+            tap("Добавить профиль", after = 3)
+            tap("Без сервера: нода на PHP-хостинге", after = 4)
+            tap("InfinityFree и другие на iFastNet", after = 3)
+            type("Логин FTP", "if0_38012345")
+            type("Пароль FTP", "••••••••••")
+            type("Адрес вашего сайта на хостинге", "https://openflux-demo.42web.io")
+            hold(4)
+            tap("Проверить вход", after = 2)
+            until { runCatching { node("Далее") }.isSuccess }
+            hold(8)
+            tap("Далее", after = 2)
+            until { runCatching { node("Установить и запустить") }.isSuccess }
+            hold(8)
+            tap("Установить и запустить", after = 2)
+            until(120) { runCatching { node("Нода готова") }.isSuccess }
+            hold(14)
+        }
+
         fun logs() {
             tap("Отключено", after = 2)
             until { demo.connection.state.value is ConnectionState.Connected }
@@ -286,7 +492,7 @@ class DemoRecorder {
             KcefAccountBrowser(), HttpSessionProbe(), System::currentTimeMillis,
             kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.SupervisorJob() + kotlinx.coroutines.Dispatchers.Default),
         )
-        val container = AppContainer(profiles, settings, connection, platform, codec, DemoNode(codec), accounts)
+        val container = AppContainer(profiles, settings, connection, platform, codec, DemoNode(codec), accounts, phpHosting = DemoPhp())
         val link = kotlinx.coroutines.runBlocking { codec.encode(
             ShareConfig(
                 name = "Нода Франкфурт", negotiate = true, secret = "5f".repeat(32),
@@ -297,6 +503,38 @@ class DemoRecorder {
                 ),
             ),
         ) }
+    }
+
+    /** The hosting steps with made-up answers and a little time, so the screens show their progress. */
+    private class DemoPhp : io.openflux.desktop.service.PhpHostingService() {
+        override suspend fun probe(ftp: io.openflux.desktop.model.FtpTarget) =
+            io.openflux.desktop.model.PhpProbe(security = "none", dir = "htdocs", writable = true)
+
+        override suspend fun deploy(
+            ftp: io.openflux.desktop.model.FtpTarget,
+            token: String,
+            onProgress: (io.openflux.desktop.model.PhpProgress) -> Unit,
+        ): io.openflux.desktop.model.PhpInstalled {
+            val total = 2_200_000L
+            for (i in 1..12) {
+                kotlinx.coroutines.delay(180)
+                onProgress(io.openflux.desktop.model.PhpProgress("upload", "lib/file$i.php", i, 12, total * i / 12, total))
+            }
+            return io.openflux.desktop.model.PhpInstalled(dir = "htdocs", token = "demo0token", files = 12, bytes = total, security = "none")
+        }
+
+        override suspend fun check(site: String, token: String, carrier: String) =
+            io.openflux.desktop.model.PhpStatus(version = "0.4", carrier = carrier, php = "8.4.1")
+
+        override suspend fun start(site: String, token: String, carrier: String, target: String, chain: Boolean, quiet: Boolean) =
+            io.openflux.desktop.model.PhpNodeState(running = true, chain = chain)
+
+        override suspend fun newRoom() = io.openflux.desktop.model.PhpRoom(
+            "0a1b2c3d-1111-2222-3333-444455556666",
+            "https://interview.cups.online/live-coding/?room=0a1b2c3d-1111-2222-3333-444455556666",
+        )
+
+        override suspend fun link(name: String, carrier: String, target: String) = "openflux://v1/demo-php-node"
     }
 
     private class DemoSettings(kind: PlatformKind) : SettingsRepository {
@@ -461,7 +699,7 @@ class DemoRecorder {
     }
 
     private class DemoPlatform(override val kind: PlatformKind) : PlatformServices {
-        private val real = JvmPlatformServices("2.5.0") { "main@6d84e01" }
+        private val real = JvmPlatformServices("2.5.0", CoreBinary()) { "main@6d84e01" }
         override val appVersion = "2.5.0"
         override val coreVersion = "main@6d84e01"
         override val clientRepo = "p1neappleXpress/OpenFluxDesktop"

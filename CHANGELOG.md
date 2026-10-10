@@ -197,6 +197,125 @@ submodule and the node wizard's core come from the fork's repositories
   of a Yandex document (your own link), a Mail.ru public document and
   cups.online rooms (created automatically), with direct always on as the
   backup; the link and the saved profile carry all of them.
+## [2.3.2] - 2026-10-07
+
+Hotfix: the core 0.4.2.
+
+### Fixed
+
+- **Mail.ru Docs: a link that only lets the document be read no longer drops the connection every few
+  seconds.** The transport sent the editor's `saveChanges` now and then, and for a link without edit rights
+  (what most public links are) the server closed the connection on every one, so the channel was up for
+  moments between reconnects. It is not sent there any more (core 0.4.2, `OpenFlux` bumped to
+  [`74cac6d`](https://github.com/p1neappleXpress/OpenFlux/commit/74cac6d)). The Engine.IO / Socket.IO
+  handshake is also completed before the auth is sent (thanks to Novarg93,
+  [OpenFlux#147](https://github.com/p1neappleXpress/OpenFlux/pull/147)). Exit nodes on a VDS need the same
+  core: «Своя нода» installs `node-v1.2.2`.
+
+## [2.3.1] - 2026-10-07
+
+Hotfix: the core 0.4.1.
+
+### Fixed
+
+- **Yandex Docs / Boards / Volga through a node: the check no longer repeats forever.** The built-in
+  browser passes a Yandex check from the node's IPv4 address (through the tunnel), but the node's own
+  requests went out over IPv6 on hosts that have an IPv6 route, so Yandex never accepted the cookies
+  the app handed over. The core now dials Yandex IPv4 first (core 0.4.1, `OpenFlux` bumped to
+  [`d0578b6`](https://github.com/p1neappleXpress/OpenFlux/commit/d0578b6)). Exit nodes on a VDS need the
+  same core: «Своя нода» installs `node-v1.2.1`.
+- **Exit node, L3: the log (`-d`) shows the tunnel's packets only**, not every packet the computer receives
+  (its own connections, DNS, scans), on Windows and Linux alike.
+
+## [2.3.0] - 2026-10-07
+
+### Added
+
+- **Exit node: choose L3 or L4.** Home → «Выходная нода» → «Выход»: **L4** ends the clients'
+  connections here and opens its own (works everywhere, no rights needed), **L3** passes their
+  packets on as they are (2 to 6 times faster for one stream in our measurements over Yandex Docs and
+  Boards, see OpenFluxClientShared#17) and needs rights. On Windows L3 asks for administrator permission (UAC)
+  for the core alone and needs WinDivert: **it is downloaded by the app when it is not there**
+  (WinDivert 2.2.2, checked against a pinned SHA-256 before every start, kept in
+  `%LOCALAPPDATA%\OpenFlux\windivert`). On Linux L3 needs root; macOS has no L3 exit yet.
+- **«Экспериментальные функции»** (Settings): the JS-transport features below are off by default.
+- **JS transports** (experimental, off by default): the «Транспорты» tab, installing a signed
+  transport by link, file or catalog with a trust dialog and the author's key fingerprint, the
+  settings the transport declares (a wizard page), its own setup and login pages in the built-in
+  browser, update check with changelog, apply and roll back; OpenFlux's own transports folded below
+  the added ones. Needs the switch above; nothing of it is shown, started or fetched without it.
+- «Ночные сборки» (Settings → О программе): the update check can look at the nightly test builds
+  next to the main releases.
+- The built-in browser's runtime (JetBrains Runtime with JCEF, about 230 MB) has a second place to be
+  downloaded from: a storage release of this repository, `browser-runtime-<version>-<build>` (not an
+  app release: it is never "latest" and the update check ignores it). A workflow copies the archives
+  byte for byte from JetBrains' CDN, which some networks throttle to about 1 KB/s, checks them
+  against the hashes pinned in the app and the ones JetBrains publishes, signs them with a GitHub
+  build attestation and lists every hash and source address in the release text.
+
+### Changed
+
+- The built-in browser's runtime is downloaded by the app itself, not by the browser library: into a
+  folder that survives a failed attempt, resumed where it stopped after a cut or a restart, checked
+  against a SHA-512 pinned in the app before anything unpacks it, and kept until the browser has
+  started. The steps are shown in the order they happen (download, check, unpack, install, start).
+- Bumps `OpenFlux` to the core 0.4.0 ([`a415c09`](https://github.com/p1neappleXpress/OpenFlux/commit/a415c09d1d1006a201b5e9523d2f30d7ee2b4149)) and `shared` to
+  [`a7fca72`](https://github.com/p1neappleXpress/OpenFluxClientShared/commit/a7fca72).
+
+### Fixed
+
+- The built-in browser was downloaded again and again on a slow or cut connection (the library tried
+  twice per start, from byte zero, into a temp file, and then said "downloaded: restart OpenFlux"
+  although nothing was). A runtime that lost its library to a cleaner is repaired instead of trusted.
+- A Yandex check on a profile without a key reached no one: the app never opened its browser. The
+  core now sends it to the app (core 0.4.0).
+- Dependencies and CI: every GitHub Action is pinned to a commit SHA; the core's Go and crypto
+  dependencies are up to date (see the core's changelog).
+
+## [2.2.0] - 2026-10-01
+
+### Added
+
+- «Без сервера» wizard: a node already on the hosting (uploaded by hand or from
+  another device) can be added from its site and access key, without FTP — paste
+  the node's page address and the key, channel and room/document fill themselves.
+  An FTP install takes an optional key of your own. «Панель ноды» opens the
+  node's own page in the browser, and the profile shows which generation serves
+  now («работает · поколение N · смена через N с»). The access key is shown and
+  copied from the profile.
+
+### Fixed
+
+- «Без сервера»: the node now stays up on any host and keeps the tunnel going
+  across its generations, and a proxy profile connects on macOS. The install no
+  longer fails when the host cuts a transfer short (InfinityFree's FTP aborted
+  the link parser part way): a file is sent again, and `auto` goes on in plain
+  FTP after it keeps failing over TLS. Bumps `OpenFlux` to
+  [`bb55dc3`](https://github.com/p1neappleXpress/OpenFlux/commit/bb55dc3) and
+  `shared` to [`98572e2`](https://github.com/p1neappleXpress/OpenFluxClientShared/commit/98572e2).
+- The core's Yandex Boards moves packets as `modify-objects` text objects (the
+  board no longer relays `notify-position`), and Yandex Docs and Mail.ru Docs
+  send the web client's `saveChanges` stream built from the live session.
+
+### Added
+
+- «Без сервера»: a new profile mode where the exit is a small PHP program on an
+  ordinary web hosting (free or paid, any with PHP and FTP/FTPS) instead of your
+  own server. The wizard (Профили → «Без сервера») takes the FTP data and the
+  site's address, creates a cups.online room (or takes a Mail.ru document),
+  uploads the node, checks that the site runs it, starts it and connects through
+  it before saving the profile. Works as proxies or as the full tunnel (TUN);
+  no key to keep, TCP on ports 80 and 443 only. The node renews itself while it
+  is used, and connecting a profile made this way first asks its node to run
+  when the hosting is reachable; the profile page has Start/Stop for it. Its
+  `openflux://` link and QR carry the mode (never the node's token) and are made
+  by the core. The same mode on the profile editor, import and share dialogs.
+
+- «Своя нода»: a new channel is no longer Yandex-only. The transports step
+  takes any mix of a Yandex document (your own link), a Mail.ru public
+  document and cups.online rooms (created automatically), with direct
+  always on as the backup; the link and the saved profile carry all of
+  them.
 - «Автообновление ядра» on the plan step (on by default): the server's
   `openflux-node-update.timer` checks the newest `node-v*` release every
   6 hours, verifies it against the release's `node-install.sh` and
