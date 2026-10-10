@@ -5,12 +5,37 @@ All notable changes to OpenFluxDesktop. Format loosely follows
 
 ## [Unreleased]
 
+## [2.11.0] - 2026-10-10 (meepo161/OpenFluxDesktop)
+
+### Added
+
+- Node wizard: change the documents of a channel already on the server. The
+  transports step lists the server's channels; "Изменить транспорты" reads one
+  and "Применить" adds or removes documents in place. The key, port and
+  encryption context stay, so links handed out keep working. With the
+  channel's profile on this device (made by the wizard or imported from its
+  link) the wizard builds the new link with the channel's context, checks the
+  channel through it and updates the same profile.
+- From p1neappleXpress 2.3.x: script (JS) transports behind "Экспериментальные
+  функции", the "без сервера" PHP-hosting wizard, nightly release channel.
+- From p1neappleXpress: the exit node chooses L3 or L4; WinDivert and the built-in
+  browser runtime are fetched on demand.
+
 ### Changed
 
-- Integrated current upstream/main with fork and bonding; retained document creation and Yandex sign-in from the fork.
-- The node installer supports older systemd distributions and the list, remove-by-name and uninstall commands.
-- Included upstream fixes for classic-profile traffic counters and connection state.
-- Included upstream full-tunnel support on macOS and per-connection core elevation on Windows.
+- Core 0.5.1 (meepo161/OpenFlux c36eb0c) with p1neappleXpress 0.4.2 merged in;
+  the node wizard installs node-v1.4.1.
+- Integrated current upstream/main with fork and bonding; retained document
+  creation, Yandex sign-in, accounts (a fresh sign-in goes on to your own node)
+  and developer mode from the fork.
+
+### Fixed
+
+- Mail.ru Docs carrier joins documents again (the server refused a Chrome user
+  agent with 409).
+- cups.online: a lost message no longer stalls the stream.
+- The Accounts tab follows developer mode again next to the Transports tab of
+  the experimental features.
 
 ## [2.10.0] - 2026-09-30 (meepo161/OpenFluxDesktop)
 
