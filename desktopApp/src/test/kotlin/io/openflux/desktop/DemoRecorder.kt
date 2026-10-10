@@ -100,6 +100,33 @@ class DemoRecorder {
     }
 
     /**
+     * Stills of the screens added with accounts, node-from-profile and updates, at desktop and phone size.
+     * OPENFLUX_SHOTS=<dir> ./gradlew :desktopApp:test --tests '*DemoRecorder.stills'
+     */
+    @Test
+    fun stills() {
+        val out = System.getenv("OPENFLUX_SHOTS") ?: return
+        for (platform in listOf(PlatformKind.Desktop, PlatformKind.Android)) {
+            val base = File(out, platform.name.lowercase())
+            // A release newer than the running app is offered on Home.
+            scene(File(base, "home-update"), platform, beforeShow = { kotlinx.coroutines.runBlocking { it.container.updates.check(manual = true) } }) { hold(3) }
+            scene(File(base, "about"), platform, beforeShow = { kotlinx.coroutines.runBlocking { it.container.updates.check(manual = true) } }) {
+                tap("Настройки", after = 3)
+                tap("О программе", after = 4)
+            }
+            scene(File(base, "interface"), platform) {
+                tap("Настройки", after = 3)
+                tap("Интерфейс", after = 4)
+            }
+            scene(File(base, "subscription"), platform) { tap("Подписка", after = 4) }
+            scene(File(base, "profile-node"), platform) {
+                tap("Профили", after = 3)
+                tap("Нода Амстердам", after = 5)
+            }
+        }
+    }
+
+    /**
      * Only the "без сервера" wizard, driven through its model (no typing): one PNG per step.
      * OPENFLUX_DEMO_PHP=<dir> ./gradlew :desktopApp:test --tests '*DemoRecorder.recordPhp'
      */
@@ -281,7 +308,7 @@ class DemoRecorder {
         }
     }
 
-    private fun scene(dir: File, kind: PlatformKind, script: Rec.() -> Unit) {
+    private fun scene(dir: File, kind: PlatformKind, beforeShow: (Demo) -> Unit = {}, script: Rec.() -> Unit) {
         // Voyager keeps the tabs' screen models for the whole process: a scene
         // must not inherit the previous one's (and its demo connection).
         listOf(HomeTab, ProfilesTab, LogsTab, SettingsTab).forEach(ScreenModelStore::onDispose)
@@ -289,6 +316,7 @@ class DemoRecorder {
         dir.mkdirs()
         val desktop = kind == PlatformKind.Desktop
         val demo = Demo(kind)
+        beforeShow(demo)
         runSkikoComposeUiTest(
             size = if (desktop) Size(1100f, 700f) else Size(412f, 870f),
             density = Density(1f),
@@ -470,7 +498,7 @@ class DemoRecorder {
             tap("Отключено", after = 2)
             until { demo.connection.state.value is ConnectionState.Connected }
             hold(4)
-            tap("Логи", after = 6)
+            tap("Журнал", after = 6)
             repeat(20) { demo.connection.tick(); shot(150) }
         }
 
@@ -719,5 +747,13 @@ class DemoRecorder {
         override fun newSecret() = "d4".repeat(32)
         override fun now() = System.currentTimeMillis()
         override suspend fun latestRelease(): String? = "2.5.0"
+
+        // A newer release on "GitHub", so the update banner and the About page have something to show.
+        override val updateInstallSupported = true
+        override suspend fun httpText(url: String): String =
+            """[{"tag_name":"v2.12.0","draft":false,"prerelease":false,"body":"x","html_url":"https://github.com/x/y/releases/tag/v2.12.0",
+              "assets":[{"name":"OpenFlux-2.12.0-windows-x64-setup.exe","browser_download_url":"https://github.com/x/y/releases/download/v2.12.0/OpenFlux-2.12.0-windows-x64-setup.exe","size":132101632},
+                        {"name":"SHA256SUMS.txt","browser_download_url":"https://github.com/x/y/releases/download/v2.12.0/SHA256SUMS.txt","size":698}]}]"""
+        override fun updateAsset(assets: List<io.openflux.desktop.model.AppAsset>) = assets.firstOrNull { it.name.endsWith("-setup.exe") }
     }
 }
