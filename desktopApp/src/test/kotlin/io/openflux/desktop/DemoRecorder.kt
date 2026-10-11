@@ -63,8 +63,8 @@ import io.openflux.desktop.ui.BrowserPage
 import io.openflux.desktop.ui.NoScrollbars
 import io.openflux.desktop.ui.Shortcuts
 import io.openflux.desktop.ui.home.HomeTab
-import io.openflux.desktop.ui.logs.LogsTab
-import io.openflux.desktop.ui.profiles.ProfilesTab
+import io.openflux.desktop.ui.connections.ConnectionsTab
+import io.openflux.desktop.ui.nodes.NodesTab
 import io.openflux.desktop.ui.settings.SettingsTab
 import io.openflux.desktop.ui.shell.OpenFluxApp
 import cafe.adriel.voyager.core.model.ScreenModelStore
@@ -118,10 +118,49 @@ class DemoRecorder {
                 tap("Настройки", after = 3)
                 tap("Интерфейс", after = 4)
             }
-            scene(File(base, "subscription"), platform) { tap("Подписка", after = 4) }
-            scene(File(base, "profile-node"), platform) {
-                tap("Профили", after = 3)
+            scene(File(base, "connections"), platform) { tap("Подключения", after = 4) }
+            scene(File(base, "profile"), platform) {
+                tap("Подключения", after = 3)
+                tap("Дом", after = 5)
+            }
+            scene(File(base, "add"), platform) {
+                tap("Подключения", after = 3)
+                tap("Добавить", after = 4)
+            }
+            scene(File(base, "nodes"), platform) { tap("Ноды", after = 4) }
+            // A wide window keeps the list at the left and opens the profile beside it.
+            if (platform == PlatformKind.Desktop) {
+                scene(File(base, "split"), platform, width = 1500f) {
+                    tap("Подключения", after = 3)
+                    tap("Нода Амстердам", after = 5)
+                }
+            }
+            scene(File(base, "node"), platform) {
+                tap("Ноды", after = 3)
                 tap("Нода Амстердам", after = 5)
+            }
+            scene(File(base, "create-node"), platform) {
+                tap("Ноды", after = 3)
+                tap("Создать", after = 3)
+                tap("На своём сервере (VDS)", after = 5)
+            }
+            scene(File(base, "accounts"), platform) {
+                tap("Настройки", after = 3)
+                tap("Аккаунты", after = 6)
+            }
+            scene(File(base, "register"), platform) {
+                tap("Подключения", after = 3)
+                tap("Добавить", after = 3)
+                tap("Аккаунт OpenFlux", after = 3)
+                tap("Создать аккаунт", after = 4)
+            }
+            scene(File(base, "node-editor"), platform, beforeShow = { it.settings.update { s -> s.copy(knownHostKeys = mapOf("203.0.113.10:22" to "x")) } }, height = 1700f) {
+                tap("Ноды", after = 3)
+                tap("Нода Амстердам", after = 4)
+                tap("Изменить на сервере", after = 6)
+                shot()
+                type("Пароль от сервера", "secret")
+                tap("Загрузить с сервера", after = 30)
             }
         }
     }
@@ -272,7 +311,7 @@ class DemoRecorder {
     @Test
     fun recordExperimental() {
         val out = System.getenv("OPENFLUX_DEMO_EXPERIMENTAL") ?: return
-        listOf(HomeTab, ProfilesTab, LogsTab, SettingsTab).forEach(ScreenModelStore::onDispose)
+        listOf(HomeTab, ConnectionsTab, NodesTab, SettingsTab).forEach(ScreenModelStore::onDispose)
         val dir = File(out, "experimental").apply { deleteRecursively(); mkdirs() }
         val demo = Demo(PlatformKind.Desktop)
         runSkikoComposeUiTest(size = Size(1100f, 760f), density = Density(1f)) {
@@ -308,17 +347,17 @@ class DemoRecorder {
         }
     }
 
-    private fun scene(dir: File, kind: PlatformKind, beforeShow: (Demo) -> Unit = {}, script: Rec.() -> Unit) {
+    private fun scene(dir: File, kind: PlatformKind, beforeShow: (Demo) -> Unit = {}, width: Float = 1100f, height: Float? = null, script: Rec.() -> Unit) {
         // Voyager keeps the tabs' screen models for the whole process: a scene
         // must not inherit the previous one's (and its demo connection).
-        listOf(HomeTab, ProfilesTab, LogsTab, SettingsTab).forEach(ScreenModelStore::onDispose)
+        listOf(HomeTab, ConnectionsTab, NodesTab, SettingsTab).forEach(ScreenModelStore::onDispose)
         dir.deleteRecursively()
         dir.mkdirs()
         val desktop = kind == PlatformKind.Desktop
         val demo = Demo(kind)
         beforeShow(demo)
         runSkikoComposeUiTest(
-            size = if (desktop) Size(1100f, 700f) else Size(412f, 870f),
+            size = if (desktop) Size(width, height ?: 700f) else Size(412f, height ?: 870f),
             density = Density(1f),
         ) {
             mainClock.autoAdvance = false
@@ -391,7 +430,8 @@ class DemoRecorder {
             val boxes = fields.fetchSemanticsNodes().map { it.boundsInRoot }
             check(labels.isNotEmpty() && boxes.isNotEmpty()) { "no field \"$label\"" }
             val best = boxes.indices.minBy { i ->
-                labels.minOf { l -> (boxes[i].center - l.boundsInRoot.center).getDistance() }
+                // A label sits right above its field: compare the label's bottom-left with the field's top-left.
+                labels.minOf { l -> (androidx.compose.ui.geometry.Offset(boxes[i].left, boxes[i].top) - androidx.compose.ui.geometry.Offset(l.boundsInRoot.left, l.boundsInRoot.bottom)).getDistance() }
             }
             return fields[best]
         }
@@ -444,8 +484,8 @@ class DemoRecorder {
         }
 
         fun import() {
-            tap("Профили", after = 4)
-            tap("Импорт ссылки или QR (Ctrl+I)", after = 3)
+            tap("Подключения", after = 4)
+            tap("Импорт ссылки или QR", after = 3)
             type("openflux://v1/…", demo.link)
             hold(6)
             tap("Добавить профиль", after = 10)
@@ -456,9 +496,9 @@ class DemoRecorder {
         }
 
         fun node() {
-            tap("Профили", after = 3)
-            tap("Добавить профиль", after = 3)
-            tap("Создать свою ноду на VDS", after = 4)
+            tap("Ноды", after = 3)
+            tap("Создать", after = 3)
+            tap("На своём сервере (VDS)", after = 4)
             type("Адрес (IP или домен)", "203.0.113.10")
             type("Пароль", "••••••••")
             tap("Подключиться", after = 4)
@@ -475,9 +515,9 @@ class DemoRecorder {
         }
 
         fun phpNode() {
-            tap("Профили", after = 3)
-            tap("Добавить профиль", after = 3)
-            tap("Без сервера: нода на PHP-хостинге", after = 4)
+            tap("Ноды", after = 3)
+            tap("Создать", after = 3)
+            tap("Без сервера: на PHP-хостинге", after = 4)
             tap("InfinityFree и другие на iFastNet", after = 3)
             type("Логин FTP", "if0_38012345")
             type("Пароль FTP", "••••••••••")
@@ -669,12 +709,25 @@ class DemoRecorder {
                 throw NodeWizardException("новый сервер", hostKey = "SHA256:q3Vx8Ld2pWm7aKc9Rt1YhZ0uNf5bGe4sJiOo6TzXvBw", trust = true)
             }
             Thread.sleep(700)
-            return ServerProbe(arch = "amd64", os = "Debian 12", systemd = true, sudo = "root")
+            return ServerProbe(arch = "amd64", os = "Debian 12", systemd = true, sudo = "root", channels = listOf("of-k3f9q2"))
         }
+
+        private var installed = io.openflux.desktop.model.InstalledChannel(
+            "of-k3f9q2", "active", 31337, "https://docs.yandex.ru/edit/d/demoAmsterdamDocument0123456789",
+            listOf(NodeTransport("vyandex", "https://docs.yandex.ru/edit/d/demoAmsterdamDocument0123456789")),
+        )
+        override suspend fun showChannel(channel: String, sudoPassword: String) = installed
+        override suspend fun setTransports(channel: String, transports: List<NodeTransport>, sudoPassword: String, cookieHeader: String, mode: io.openflux.desktop.model.NodeMode?): io.openflux.desktop.model.InstalledChannel {
+            Thread.sleep(500)
+            installed = installed.copy(transports = transports)
+            return installed
+        }
+        override suspend fun channelShareLink(name: String, key: String, host: String, port: Int, transports: List<NodeTransport>, context: String) =
+            shareLink(name, key, host, port, transports)
 
         override suspend fun newChannel() = NewChannel("of-k3f9q2", "c3".repeat(32))
 
-        override suspend fun plan(channel: String, transports: List<NodeTransport>, withCookies: Boolean, autoUpdate: Boolean): NodePlan {
+        override suspend fun plan(channel: String, transports: List<NodeTransport>, withCookies: Boolean, autoUpdate: Boolean, mode: io.openflux.desktop.model.NodeMode): NodePlan {
             Thread.sleep(600)
             return NodePlan(
                 channel = channel, port = 31337,
@@ -694,6 +747,7 @@ class DemoRecorder {
             autoUpdate: Boolean,
             sudoPassword: String,
             cookieHeader: String,
+            mode: io.openflux.desktop.model.NodeMode,
         ) {
             Thread.sleep(1500)
         }
