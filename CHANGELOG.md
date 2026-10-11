@@ -5,6 +5,27 @@ All notable changes to OpenFluxDesktop. Format loosely follows
 
 ## [Unreleased]
 
+## [2.4.0] - 2026-10-11
+
+The core 0.5.0: the Telemost transport.
+
+### Added
+
+- **Yandex Telemost as a transport (experimental).** A profile of the type «Яндекс Телемост» needs only the
+  link of a Telemost conference that the exit node joins too; the tunnel rides the conference as video,
+  striped over five participants on each end (core 0.5.0, `OpenFlux` bumped to
+  [`7336e1b`](https://github.com/p1neappleXpress/OpenFlux/commit/7336e1b)). The exit is the 0.5.0 core
+  (`node-v1.3.0`) started with `-role exit -t telemost -u <conference link>`; its `--share` link imports as
+  a profile. Measured through a server exit: about 1.5 MB/s on average; the first seconds of every transfer
+  are slower while the conference ramps up. On the desktop it runs in the proxy mode: the full tunnel (TUN)
+  does not support it yet, and the core says so instead of starting. One conference serves one client.
+
+### Changed
+
+- **The tunnel's TCP rides out a late carrier.** Carriers deliver in order but now and then late; the
+  tunnel's TCP now waits that out (a 3-second retransmission floor, loss detection by duplicate ACKs)
+  instead of shrinking its window to a crawl (core 0.5.0).
+
 ## [2.3.3] - 2026-10-11
 
 Hotfix: the core 0.4.3 — the Yandex and Mail.ru carriers.
