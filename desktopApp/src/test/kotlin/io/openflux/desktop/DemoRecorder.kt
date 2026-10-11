@@ -127,22 +127,44 @@ class DemoRecorder {
                 tap("Подключения", after = 3)
                 tap("Добавить", after = 4)
             }
-            scene(File(base, "nodes"), platform) { tap("Ноды", after = 4) }
-            // A wide window keeps the list at the left and opens the profile beside it.
-            if (platform == PlatformKind.Desktop) {
-                scene(File(base, "split"), platform, width = 1500f) {
-                    tap("Подключения", after = 3)
-                    tap("Нода Амстердам", after = 5)
+            val servers = { d: Demo ->
+                d.settings.update { st ->
+                    st.copy(
+                        knownServers = listOf(io.openflux.desktop.model.KnownServer("203.0.113.10", 22, "root")),
+                        knownHostKeys = mapOf("203.0.113.10:22" to "x"),
+                    )
                 }
             }
+            scene(File(base, "nodes"), platform, beforeShow = servers) { tap("Ноды", after = 4) }
+            scene(File(base, "nodes-empty"), platform) { tap("Ноды", after = 4) }
             scene(File(base, "node"), platform) {
-                tap("Ноды", after = 3)
-                tap("Нода Амстердам", after = 5)
+                tap("Подключения", after = 3)
+                tap("Нода Амстердам", after = 3)
+                tap("Открыть ноду", after = 5)
             }
-            scene(File(base, "create-node"), platform) {
+            scene(File(base, "server-form"), platform, beforeShow = servers) {
                 tap("Ноды", after = 3)
-                tap("Создать", after = 3)
-                tap("На своём сервере (VDS)", after = 5)
+                tap("203.0.113.10", after = 5)
+            }
+            scene(File(base, "server"), platform, beforeShow = servers, height = 1300f) {
+                tap("Ноды", after = 3)
+                tap("203.0.113.10", after = 4)
+                type("Пароль", "secret")
+                tap("Подключиться к серверу", after = 30)
+            }
+            scene(File(base, "channel-edit"), platform, beforeShow = servers, height = 1700f) {
+                tap("Ноды", after = 3)
+                tap("203.0.113.10", after = 4)
+                type("Пароль", "secret")
+                tap("Подключиться к серверу", after = 30)
+                tap("Изменить", after = 8)
+            }
+            scene(File(base, "create-channel"), platform, beforeShow = servers) {
+                tap("Ноды", after = 3)
+                tap("203.0.113.10", after = 4)
+                type("Пароль", "secret")
+                tap("Подключиться к серверу", after = 30)
+                tap("Добавить ноду", after = 12)
             }
             scene(File(base, "accounts"), platform) {
                 tap("Настройки", after = 3)
@@ -153,14 +175,6 @@ class DemoRecorder {
                 tap("Добавить", after = 3)
                 tap("Аккаунт OpenFlux", after = 3)
                 tap("Создать аккаунт", after = 4)
-            }
-            scene(File(base, "node-editor"), platform, beforeShow = { it.settings.update { s -> s.copy(knownHostKeys = mapOf("203.0.113.10:22" to "x")) } }, height = 1700f) {
-                tap("Ноды", after = 3)
-                tap("Нода Амстердам", after = 4)
-                tap("Изменить на сервере", after = 6)
-                shot()
-                type("Пароль от сервера", "secret")
-                tap("Загрузить с сервера", after = 30)
             }
         }
     }
@@ -715,6 +729,7 @@ class DemoRecorder {
         private var installed = io.openflux.desktop.model.InstalledChannel(
             "of-k3f9q2", "active", 31337, "https://docs.yandex.ru/edit/d/demoAmsterdamDocument0123456789",
             listOf(NodeTransport("vyandex", "https://docs.yandex.ru/edit/d/demoAmsterdamDocument0123456789")),
+            key = "c3".repeat(32),
         )
         override suspend fun showChannel(channel: String, sudoPassword: String) = installed
         override suspend fun setTransports(channel: String, transports: List<NodeTransport>, sudoPassword: String, cookieHeader: String, mode: io.openflux.desktop.model.NodeMode?): io.openflux.desktop.model.InstalledChannel {
