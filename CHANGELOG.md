@@ -5,6 +5,19 @@ All notable changes to OpenFluxDesktop. Format loosely follows
 
 ## [Unreleased]
 
+## [2.4.1] - 2026-10-11
+
+The core 0.5.1.
+
+### Fixed
+
+- **Telemost no longer joins the room as «OpenFlux».** Lanes join as «Гость» with a browser-like
+  RTCP CNAME, so the participant name no longer gives the tunnel away (core #169).
+- **Mail.ru Docs:** `Accept-Language` now rides on the WebSocket upgrade and the API calls, for
+  clients that still saw 409 after the earlier User-Agent fix (core #164).
+- **Telemost stability:** an exit no longer crashes when a peer leaves mid-transfer, and downloads
+  through an L4 exit are no longer capped near 1.5 MB/s (core 0.5.1).
+
 ## [2.4.0] - 2026-10-11
 
 The core 0.5.0: the Telemost transport.
