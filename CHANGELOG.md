@@ -5,6 +5,15 @@ All notable changes to OpenFluxDesktop. Format loosely follows
 
 ## [Unreleased]
 
+## [2.5.1] - 2026-10-13
+
+### Fixed
+
+- **Core updated to OpenFlux 0.6.1.** The Mail.ru document carrier works again: the editor server started
+  rejecting the old cursor-field data path with "access deny", so the tunnel now rides the document's chat
+  channel, and the scripted Mail.ru carrier (which could not connect at all) now negotiates permessage-deflate
+  on the WebSocket upgrade.
+
 ## [2.5.0] - 2026-10-12
 
 ### Changed
