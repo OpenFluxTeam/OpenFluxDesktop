@@ -19,6 +19,7 @@ import io.openflux.desktop.ui.DesktopScrollbars
 import io.openflux.desktop.ui.Shortcuts
 import io.openflux.desktop.ui.components.AppIcons
 import io.openflux.desktop.ui.home.HomeTab
+import io.openflux.app.shell.OpenFluxApp2
 import io.openflux.desktop.ui.shell.OpenFluxApp
 import io.openflux.desktop.web.KcefBrowserViews
 import org.jetbrains.compose.resources.painterResource
@@ -33,6 +34,9 @@ import kotlin.system.exitProcess
 
 /** Set by the build (-Dopenflux.version); "dev" when run some other way. */
 private val APP_VERSION = System.getProperty("openflux.version") ?: "dev"
+
+/** OPENFLUX_UI=new runs the interface being rewritten (shared/docs/specs/2026-10-12-ui-redesign-design.md). */
+private val NEW_UI = System.getenv("OPENFLUX_UI") == "new"
 
 /** Held for the life of the process so a second copy cannot fight over the port and the proxy. */
 private fun acquireSingleInstance(): FileLock? {
@@ -117,7 +121,8 @@ fun main(args: Array<String>) {
             onPreviewKeyEvent = shortcuts::handle,
         ) {
             LaunchedEffect(Unit) { window.minimumSize = Dimension(MIN_WINDOW.width.value.toInt(), MIN_WINDOW.height.value.toInt()) }
-            OpenFluxApp(container, DesktopScrollbars, shortcuts, KcefBrowserViews)
+            if (NEW_UI) OpenFluxApp2(container, DesktopScrollbars, shortcuts, KcefBrowserViews)
+            else OpenFluxApp(container, DesktopScrollbars, shortcuts, KcefBrowserViews)
         }
     }
 }
