@@ -5,6 +5,13 @@ All notable changes to OpenFluxDesktop. Format loosely follows
 
 ## [Unreleased]
 
+## [2.6.2] - 2026-10-13
+
+### Fixed
+
+- **Core updated to OpenFlux 0.7.2**: a dropped Avito connection could crash the core; "Своя нода" installs
+  node-v1.4.1.
+
 ## [2.6.1] - 2026-10-13
 
 ### Fixed
