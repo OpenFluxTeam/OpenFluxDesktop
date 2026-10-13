@@ -15,12 +15,13 @@ import io.openflux.desktop.data.AppDirs
 import io.openflux.desktop.model.isActive
 import io.openflux.desktop.model.profile
 import io.openflux.desktop.platform.RELAUNCHED_ARG
-import io.openflux.desktop.ui.DesktopScrollbars
-import io.openflux.desktop.ui.Shortcuts
-import io.openflux.desktop.ui.components.AppIcons
-import io.openflux.desktop.ui.home.HomeTab
-import io.openflux.app.shell.OpenFluxApp2
-import io.openflux.desktop.ui.shell.OpenFluxApp
+import io.openflux.app.platform.DesktopScrollbars
+import io.openflux.app.platform.Shortcuts
+import io.openflux.app.shell.OpenFluxApp
+import io.openflux.app.shell.connectChosen
+import io.openflux.app.shell.stopConnection
+import io.openflux.desktop.resources.Res
+import io.openflux.desktop.resources.ic_openflux_foreground
 import io.openflux.desktop.web.KcefBrowserViews
 import org.jetbrains.compose.resources.painterResource
 import java.awt.Dimension
@@ -34,9 +35,6 @@ import kotlin.system.exitProcess
 
 /** Set by the build (-Dopenflux.version); "dev" when run some other way. */
 private val APP_VERSION = System.getProperty("openflux.version") ?: "dev"
-
-/** OPENFLUX_UI=new runs the interface being rewritten (shared/docs/specs/2026-10-12-ui-redesign-design.md). */
-private val NEW_UI = System.getenv("OPENFLUX_UI") == "new"
 
 /** Held for the life of the process so a second copy cannot fight over the port and the proxy. */
 private fun acquireSingleInstance(): FileLock? {
@@ -92,10 +90,10 @@ fun main(args: Array<String>) {
         }
 
         LaunchedEffect(Unit) {
-            if (settings.autoConnect) HomeTab.connectSelected(container)
+            if (settings.autoConnect) connectChosen(container)
         }
 
-        val icon = painterResource(AppIcons.Logo)
+        val icon = painterResource(Res.drawable.ic_openflux_foreground)
         Tray(
             icon = icon,
             tooltip = if (state.isActive) "OpenFlux — ${state.profile?.name ?: "подключено"}" else "OpenFlux — отключено",
@@ -103,9 +101,9 @@ fun main(args: Array<String>) {
             menu = {
                 Item("Открыть OpenFlux", onClick = { visible = true })
                 if (state.isActive) {
-                    Item("Отключить", onClick = { container.connection.disconnect() })
+                    Item("Отключить", onClick = { stopConnection(container) })
                 } else {
-                    Item("Подключить", onClick = { HomeTab.connectSelected(container) })
+                    Item("Подключить", onClick = { connectChosen(container) })
                 }
                 Separator()
                 Item("Выход", onClick = quit)
@@ -121,8 +119,7 @@ fun main(args: Array<String>) {
             onPreviewKeyEvent = shortcuts::handle,
         ) {
             LaunchedEffect(Unit) { window.minimumSize = Dimension(MIN_WINDOW.width.value.toInt(), MIN_WINDOW.height.value.toInt()) }
-            if (NEW_UI) OpenFluxApp2(container, DesktopScrollbars, shortcuts, KcefBrowserViews)
-            else OpenFluxApp(container, DesktopScrollbars, shortcuts, KcefBrowserViews)
+            OpenFluxApp(container, DesktopScrollbars, shortcuts, KcefBrowserViews)
         }
     }
 }
