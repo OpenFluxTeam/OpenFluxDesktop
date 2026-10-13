@@ -5,6 +5,22 @@ All notable changes to OpenFluxDesktop. Format loosely follows
 
 ## [Unreleased]
 
+## [2.6.1] - 2026-10-13
+
+### Fixed
+
+- **Core updated to OpenFlux 0.7.1.** 2.6.0 shipped a core that had lost the 0.6.1 Mail.ru fix (Mail.ru
+  answered "access deny" again) and the node's `.flux` auto-updater; both are back.
+- **cups.online is several times faster**: through the tunnel, 4 rooms went from ~90 KB/s to ~420 KB/s
+  (the carrier no longer sends faster than the server relays, so it stops losing most of what it sends).
+  cups and avito run each room as a lane of one reliable link; a room list made by a new exit node only
+  works with this version or newer.
+- **"Своя нода" installs the 0.7.1 exit-node core** (node-v1.4.0) instead of 0.5.1.
+
+## [2.6.0] - 2026-10-13
+
+- Avito transport, StripedTransport, cups.online tuning (core 0.7.0).
+
 ## [2.5.1] - 2026-10-13
 
 ### Fixed
