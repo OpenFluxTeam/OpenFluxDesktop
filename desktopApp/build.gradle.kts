@@ -193,7 +193,7 @@ compose.desktop {
             // The core (and wintun.dll on Windows) in resources/<windows|macos|linux>,
             // put there by scripts/build-core.sh or the release workflow.
             appResourcesRootDir.set(project.layout.projectDirectory.dir("resources"))
-            modules("java.instrument", "java.management", "java.net.http", "jdk.crypto.ec", "jdk.unsupported")
+            modules("java.instrument", "java.management", "java.net.http", "jdk.crypto.ec", "jdk.httpserver", "jdk.unsupported")
 
             windows {
                 menuGroup = "OpenFlux"
