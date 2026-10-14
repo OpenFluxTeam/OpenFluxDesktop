@@ -67,13 +67,26 @@ abstract class PrepareCore @Inject constructor(private val exec: ExecOperations)
     @get:Internal val missing: Boolean
         get() {
             val out = outDir.get().asFile
-            return !File(out, coreName).isFile || (goos.get() == "windows" && !File(out, "wintun.dll").isFile)
+            return !File(out, coreName).isFile || (goos.get() == "windows" && !File(out, "wintun.dll").isFile) || stale()
         }
+
+    /**
+     * A core built earlier from another commit of the source than the one checked out now (the submodule moved):
+     * a local run would keep an old core that cannot read newer links. CI builds its own, it is never stale here.
+     */
+    private fun stale(): Boolean {
+        if (System.getenv("CI") != null) return false
+        val source = sourceDirs.get().firstOrNull { File(it, "go.mod").isFile } ?: return false
+        val branch = runCatching { run(source, "git", "rev-parse", "--abbrev-ref", "HEAD") }.getOrNull() ?: return false
+        val rev = runCatching { run(source, "git", "describe", "--always", "--dirty") }.getOrNull() ?: return false
+        val file = File(outDir.get().asFile, "openflux-core.version")
+        return !file.isFile || file.readText().trim() != "$branch@$rev"
+    }
 
     @TaskAction
     fun prepare() {
         val out = outDir.get().asFile.apply { mkdirs() }
-        if (!File(out, coreName).isFile) buildCore(out)
+        if (!File(out, coreName).isFile || stale()) buildCore(out)
         if (goos.get() == "windows" && !File(out, "wintun.dll").isFile) wintun(out)
     }
 
