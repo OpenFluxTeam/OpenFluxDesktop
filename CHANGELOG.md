@@ -5,6 +5,16 @@ All notable changes to OpenFluxDesktop. Format loosely follows
 
 ## [Unreleased]
 
+## [3.4.1] - 2026-10-14 (OpenFluxTeam/OpenFluxDesktop)
+
+### Fixed
+
+- **Sign-in no longer needs ports 47621-47625.** The app takes a free port from the system for the way back from the browser (the service accepts any port of 127.0.0.1, RFC 8252). Before, «Войти» failed with «порты заняты» when Docker, WSL or a VPN kept that range reserved.
+
+### Changed
+
+- **The journal says whether the node really works.** «Канал до ноды поднят» is written when the link is up; «Нода подтверждена: трафик идёт через неё, внешний адрес …» only once the check through the tunnel answers. If it does not, two warnings say what that means (no answer, the proxy is closed, DNS or TLS through the tunnel) and what to look at.
+- The core's useful lines (key confirmed, encryption on, fall back to the classic mode, tunnel active, a captcha is asked for) are also said in plain Russian next to the core's own text; the «Важные» filter shows them. Fatal core errors (connection refused, timeout, no such host, certificate, 401/403) get a plain cause, and a core that stops without one points to the journal.
 ## [3.4.0] - 2026-10-14 (OpenFluxTeam/OpenFluxDesktop)
 
 ### Changed
