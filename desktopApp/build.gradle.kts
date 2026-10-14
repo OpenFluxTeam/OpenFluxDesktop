@@ -15,8 +15,16 @@ kotlin {
     jvmToolchain(17)
 }
 
-/** The app version: -PappVersion=1.2.3 (the release workflow passes the tag). */
-val appVersion = (findProperty("appVersion") as String?)?.removePrefix("v")?.takeIf { it.isNotBlank() } ?: "2.0.0"
+/** The latest release tag reachable from this checkout (v3.4.1 -> 3.4.1), for a local run; null without git or tags. */
+fun latestReleaseTag(): String? = runCatching {
+    providers.exec {
+        commandLine("git", "describe", "--tags", "--match", "v[0-9]*", "--abbrev=0")
+        isIgnoreExitValue = true
+    }.standardOutput.asText.get().trim().removePrefix("v").takeIf { Regex("""\d+\.\d+\.\d+""").matches(it) }
+}.getOrNull()
+
+/** The app version: -PappVersion=1.2.3 (the release workflow passes the tag); a local run takes the latest tag. */
+val appVersion = (findProperty("appVersion") as String?)?.removePrefix("v")?.takeIf { it.isNotBlank() } ?: latestReleaseTag() ?: "2.0.0"
 
 /** The id that names this build to the OpenFlux service (an identifier, not a secret): -Popenflux.appId=ofa_… or OPENFLUX_APP_ID. */
 val appId = ((findProperty("openflux.appId") as String?) ?: System.getenv("OPENFLUX_APP_ID")).orEmpty().trim()
