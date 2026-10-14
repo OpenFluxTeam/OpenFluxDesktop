@@ -18,17 +18,17 @@ kotlin {
 /** The app version: -PappVersion=1.2.3 (the release workflow passes the tag). */
 val appVersion = (findProperty("appVersion") as String?)?.removePrefix("v")?.takeIf { it.isNotBlank() } ?: "2.0.0"
 
-/** The key that names this build to the OpenFlux service: -Popenflux.appKey=ofk_… or OPENFLUX_APP_KEY. It is not committed. */
-val appKey = ((findProperty("openflux.appKey") as String?) ?: System.getenv("OPENFLUX_APP_KEY")).orEmpty().trim()
+/** The id that names this build to the OpenFlux service (an identifier, not a secret): -Popenflux.appId=ofa_… or OPENFLUX_APP_ID. */
+val appId = ((findProperty("openflux.appId") as String?) ?: System.getenv("OPENFLUX_APP_ID")).orEmpty().trim()
 
-val writeAppKey by tasks.registering {
-    val out = layout.buildDirectory.file("generated/appkey/openflux-appkey.txt")
-    inputs.property("appKey", appKey)
+val writeAppId by tasks.registering {
+    val out = layout.buildDirectory.file("generated/appid/openflux-appid.txt")
+    inputs.property("appId", appId)
     outputs.file(out)
-    doLast { out.get().asFile.apply { parentFile.mkdirs() }.writeText(appKey) }
+    doLast { out.get().asFile.apply { parentFile.mkdirs() }.writeText(appId) }
 }
-sourceSets.main { resources.srcDir(layout.buildDirectory.dir("generated/appkey")) }
-tasks.named("processResources") { dependsOn(writeAppKey) }
+sourceSets.main { resources.srcDir(layout.buildDirectory.dir("generated/appid")) }
+tasks.named("processResources") { dependsOn(writeAppId) }
 
 dependencies {
     implementation(project(":shared"))
