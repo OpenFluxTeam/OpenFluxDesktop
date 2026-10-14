@@ -5,6 +5,12 @@ All notable changes to OpenFluxDesktop. Format loosely follows
 
 ## [Unreleased]
 
+## [3.4.2] - 2026-10-15 (OpenFluxTeam/OpenFluxDesktop)
+
+### Fixed
+
+- **A connection of the bot the app cannot read is said with its reason.** Before, any such failure was «обновите приложение»; now the line names the cause (for example «Неизвестный транспорт «avito»: возможно, нужно обновить OpenFlux»). One unreadable connection no longer stops the others from being refreshed.
+- **No connection because of a slot is explained in the service's own words.** The note under the subscription shows why the service refused (for example that a paused connection holds the slot) instead of the fixed «подписка не действует или все места заняты». A paused connection no longer makes the app wait for it forever: a new connection is asked for, and the service says if that is not possible.
 ## [3.4.1] - 2026-10-14 (OpenFluxTeam/OpenFluxDesktop)
 
 ### Fixed
