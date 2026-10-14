@@ -5,6 +5,10 @@ All notable changes to OpenFluxDesktop. Format loosely follows
 
 ## [Unreleased]
 
+### Changed
+
+- **Signing in is on the OpenFlux page (id.openflux.dev):** by email or through Telegram. «Войти» opens the page in the browser and brings you back; the subscription and the connection appear by themselves. The sign-in through confirmation in the bot (3.3.0) is gone, the service no longer has it. A session from 3.3.0 keeps working. While you sign in the app listens on 127.0.0.1, on the first free port of 47621–47625. It needs the service's app sign-in (`auth/app/exchange`) and, in the build, an app key (`-Popenflux.appKey=ofk_…` or `OPENFLUX_APP_KEY`).
+
 ## [3.3.0] - 2026-10-14 (meepo161/OpenFluxDesktop)
 
 ### Changed
