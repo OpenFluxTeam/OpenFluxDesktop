@@ -5,6 +5,14 @@ All notable changes to OpenFluxDesktop. Format loosely follows
 
 ## [Unreleased]
 
+## [2.6.3] - 2026-10-14
+
+### Changed
+
+- **Core updated to OpenFlux 0.7.3**: Mail.ru is much faster — the tunnel now packs far more into each
+  editor-chat message before the server's ~12-message cut, lifting end-to-end throughput from tens of
+  KB/s to roughly 800 KB/s per burst. "Своя нода" installs node-v1.4.2.
+
 ## [2.6.2] - 2026-10-13
 
 ### Fixed
