@@ -68,6 +68,7 @@ abstract class PrepareCore @Inject constructor(private val exec: ExecOperations)
     @get:Internal abstract val goarch: Property<String>
     @get:Internal abstract val repository: Property<String>
     @get:Internal abstract val ref: Property<String>
+    @get:Internal abstract val allowUnpinned: Property<Boolean>
 
     @get:Internal val coreName: String
         get() = "openflux-${goos.get()}-${goarch.get()}" + if (goos.get() == "windows") ".exe" else ""
@@ -105,6 +106,7 @@ abstract class PrepareCore @Inject constructor(private val exec: ExecOperations)
                     "соберите ядро scripts/build-core.sh или запустите без него: -PskipCore=true",
             )
         val source = sourceDirs.get().firstOrNull { File(it, "go.mod").isFile } ?: clone()
+        checkPinned(source)
         logger.lifecycle("Собираю ядро OpenFlux ($coreName) из ${source.path}, $go")
         val target = File(out, coreName)
         exec.exec {
@@ -120,6 +122,25 @@ abstract class PrepareCore @Inject constructor(private val exec: ExecOperations)
         val branch = runCatching { run(source, "git", "rev-parse", "--abbrev-ref", "HEAD") }.getOrNull()
         val rev = runCatching { run(source, "git", "describe", "--always", "--dirty") }.getOrNull()
         File(out, "openflux-core.version").writeText(if (branch != null && rev != null) "$branch@$rev\n" else "local\n")
+    }
+
+    /**
+     * The OpenFlux submodule must be on the commit this repository pins: a `checkout main` inside it once rolled the
+     * local core back to node-v1.0.0, and the app then could not talk to new nodes. -PcoreUnpinned=true builds anyway.
+     */
+    private fun checkPinned(source: File) {
+        if (allowUnpinned.get()) return
+        val parent = source.parentFile ?: return
+        val entry = runCatching { run(parent, "git", "ls-tree", "HEAD", source.name) }.getOrNull()?.split(Regex("\\s+")) ?: return
+        if (entry.getOrNull(1) != "commit") return // not a submodule of this repository (a sibling clone)
+        val pinned = entry.getOrNull(2) ?: return
+        val head = runCatching { run(source, "git", "rev-parse", "HEAD") }.getOrNull() ?: return
+        if (head != pinned) {
+            throw GradleException(
+                "Сабмодуль OpenFlux стоит на ${head.take(7)}, а репозиторий закрепил ${pinned.take(7)}: ядро собралось бы " +
+                    "не то. Верните его: git submodule update --init OpenFlux (или соберите нарочно: -PcoreUnpinned=true)",
+            )
+        }
     }
 
     private fun clone(): File {
@@ -187,6 +208,7 @@ val prepareCore by tasks.registering(PrepareCore::class) {
     )
     repository.set(providers.gradleProperty("coreRepo").orElse("meepo161/OpenFlux"))
     ref.set(providers.gradleProperty("coreRef").orElse("main"))
+    allowUnpinned.set(findProperty("coreUnpinned") == "true")
     val skip = findProperty("skipCore") == "true"
     onlyIf { !skip && missing }
 }

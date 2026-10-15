@@ -5,6 +5,15 @@ All notable changes to OpenFluxDesktop. Format loosely follows
 
 ## [Unreleased]
 
+## [3.6.3] - 2026-10-15 (OpenFluxTeam/OpenFluxDesktop)
+
+3.6.2 was not published: its build stopped on a test that still expected the old rule. Its fixes ship here.
+
+### Fixed
+
+- The tests follow the new rule for a place without documents (it connects through cups.online and Avito).
+- **A local build no longer bundles a core from a moved submodule.** If OpenFlux/ is not on the commit this repository pins (a `checkout main` inside it once rolled the core back to node-v1.0.0), the build and scripts/build-core.sh stop and say how to put it back; -PcoreUnpinned=true / CORE_UNPINNED=1 build it anyway.
+
 ## [3.6.2] - 2026-10-15 (OpenFluxTeam/OpenFluxDesktop)
 
 ### Fixed
