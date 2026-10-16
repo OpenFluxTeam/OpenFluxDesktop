@@ -8,10 +8,10 @@ passing a transport's check (SmartCaptcha, a login wall).
 
 Current release: **3.8.0**, with the OpenFlux core 0.14.0 (node-v1.7.0). Releases
 are on the [releases page](https://github.com/OpenFluxTeam/OpenFluxDesktop/releases);
-the app checks for them itself (Settings → About and updates) and installs one
+the app checks for them itself (Настройки → «О программе») and installs one
 only when you agree.
 
-What the current core gives the app:
+What the current release brings:
 
 - **Direct first.** A `direct` transport (a plain TCP connection to the node)
   is used ahead of the document carriers (Yandex, Mail.ru, cups.online, MAX…)
@@ -21,7 +21,8 @@ What the current core gives the app:
   pays, Reno on direct streams. The measurements and the method are in the
   core's `TRANSPORT_PERFORMANCE.md`.
 - **Stripe groups.** Several carriers of one or mixed types can work as one
-  stripe; the app has no screen for it yet, set `Lanes = N` in a `.conf`.
+  stripe. This is a core feature for now (`--lanes N` or `Lanes = N` on a node);
+  the app has no screen for it.
 - **A restarted node is taken over at once**, not after 30 s of silence.
 
 This repository's app code and UI (the `desktopApp/` and `shared/` modules)
