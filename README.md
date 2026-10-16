@@ -5,8 +5,8 @@
 <h1 align="center">OpenFluxDesktop</h1>
 
 <p align="center">
-  The OpenFlux client for Windows, macOS and Linux.<br>
-  A tunnel that rides on ordinary web services, with automatic failover between them.
+  The desktop client of OpenFlux, a network stack research tool, for Windows, macOS and Linux.<br>
+  An IPv4 TCP/UDP tunnel over pluggable transports, with end-to-end encryption, failover and your own exit nodes.
 </p>
 
 <p align="center">
@@ -23,51 +23,67 @@
   <a href="https://github.com/OpenFluxTeam/OpenFlux">Core</a> · <a href="https://github.com/OpenFluxTeam/OpenFluxDesktop">Desktop</a> · <a href="https://github.com/OpenFluxTeam/OpenFluxAndroid">Android</a> · <a href="https://testflight.apple.com/join/BwnAcdus">iOS (TestFlight; the App Store release is coming)</a>
 </p>
 
-<p align="center">
-  <img src="docs/images/desktop-home.png" alt="OpenFlux on the desktop, connected: the Sun in the middle of its network" width="860">
-</p>
-
 ## What it is
 
-OpenFluxDesktop is the desktop app of [OpenFlux](https://github.com/OpenFluxTeam/OpenFlux). It runs the OpenFlux core as a separate process and gives it a window, a tray icon and a setup wizard. Traffic goes through a **transport**: a document on a web service (Yandex, Mail.ru, cups.online, Avito, Telemost, MAX) or a plain TCP connection to your own node. A profile can hold several transports; the app switches between them by priority when one stops working.
+[OpenFlux](https://github.com/OpenFluxTeam/OpenFlux) is a network stack research tool: an IPv4 TCP/UDP tunnel with pluggable transports (including a signed JS scripting engine for writing new ones), a batched + zstd codec, and two exit-node backends (L3 raw forward / L4 gVisor proxy).
 
-## The switch
+OpenFluxDesktop is its desktop client. It bundles the core, runs it as a separate process and drives it over IPC; the app itself manages profiles, transports, keys and exit nodes.
 
-<p align="center">
-  <img src="docs/images/switch.gif" alt="The switch: the Moon cracks with fire and burns into the Sun, the devices wake and connect, then it all goes back" width="460">
-</p>
+```
+programs ──> Wintun / utun  or  SOCKS5 / HTTP ──> OpenFlux core ──> session of transports ──> exit node ──> Internet
+                                                  (bundled)         priorities, failover       --mode l4 | l3
+```
 
-The connect button is a small universe. While the app is off, the Moon turns slowly in the middle and phones, tablets, laptops and monitors drift round it with their screens dark. Press it: while the connection is being set up, the Moon's crust cracks with fire; once it is up, the Moon burns into the Sun, the screens light up as its light reaches them, the devices settle into orbits, and links of light join them to each other and to the Sun, with traffic running along them, faster when the connection carries more. Disconnect and it all plays back; a failed connection flares red. The Moon and the Sun are real: NASA's LRO map of the Moon and the Sun's surface seen by the Solar Dynamics Observatory, drawn by a shader on the GPU.
+## Capabilities
 
-<p align="center">
-  <img src="docs/images/home-states.png" alt="Home: off, connecting, connected" width="860">
-</p>
+### Tunnel
 
-## Features
+- **Full tunnel** through a virtual network interface: Wintun on Windows, utun on macOS (needs administrator rights).
+- **Proxy mode**: a local SOCKS5 (`127.0.0.1:1080`) and HTTP (`127.0.0.1:1081`) proxy for the programs you point at it. On Windows the app can set the system proxy (WinInet) for the time it is connected.
+- **IPv4 TCP and UDP**; through an L3 exit, whole IP packets including ICMP.
 
-- **A new look.** Deep navy and one blue accent, as in 2.x, with soft light and motion everywhere; dark and light themes.
-- **Full tunnel or a proxy.** All of the computer's traffic through Wintun (Windows) or utun (macOS), or a local SOCKS5 and HTTP proxy. Windows can also point the system proxy at it while connected.
-- **Several transports in one profile**, each with a priority and the network it may use. When the best one fails, the next takes over.
-- **Encryption.** AES-256-GCM end to end with a key you set; a profile with a key hides the traffic from the service that carries it.
-- **A node in a few clicks.** The wizard installs an exit node on your server over SSH, or sets one up on ordinary PHP hosting with no server at all. The node updates itself and rolls back if an update does not start.
-- **Share by link or QR.** An `openflux://` link carries a whole profile.
-- **A built-in browser** for the checks some services ask for (SmartCaptcha, a login wall).
-- **Your own node on this computer.** The *Exit node* mode turns the app into a node that others connect through.
-- **Updates from GitHub releases**, checked against the release's `SHA256SUMS.txt`, installed only when you agree.
+### Transports and sessions
 
-<p align="center">
-  <img src="docs/images/desktop-light.png" alt="The light theme" width="49%">
-  <img src="docs/images/desktop-servers.png" alt="A server and its nodes" width="49%">
-</p>
+- **Native transports** of the core: Yandex Docs, Yandex Volga, Yandex Board, Mail.ru, cups.online, Telemost, Avito, MAX/OneMe, and `direct` — a plain TCP connection to your node.
+- **JS transports**: signed packages for the core's scripting engine, installed from the bundle, from GitHub or by a link. The core checks each package's signature; the app shows its parameters and sends the package to your nodes.
+- **Multi-transport sessions**: a profile holds several transports, each with a priority and the networks it may use. Negotiation is authenticated; when the active carrier stalls, the session moves to the next one without tearing the tunnel down.
+- **Direct first**: while `direct` to the node is alive it carries the traffic ahead of the document carriers, with a 16000-byte tunnel MTU, pooled buffers and Reno congestion control on its streams.
+- **Stripe groups**: several carriers of one or mixed types work as one stripe, one lane each.
+- **Codec** per profile: batched + zstd, or the legacy per-packet LZ4 codec for old nodes.
+
+### Encryption
+
+- **AES-256-GCM end to end** between the client and the exit node, with a key per channel. With a key, the service that carries the documents sees only ciphertext.
+- The wizard generates node keys; they travel inside the profile link and are not sent anywhere else.
+
+### Exit nodes
+
+- **Node wizard over SSH**: installs the core's exit node on a server (Linux amd64, arm64, armv7) and sets its backend and transports:
+  - **L4** — a userspace gVisor TCP/IP stack that terminates connections and opens new ones; needs no root and runs anywhere;
+  - **L3** — raw forwarding of IP packets with SNAT/DNAT, one connection end to end; needs root and iptables.
+- **Verification**: after setup the app connects through the new node and checks that the exit address is the server's.
+- **A server's channels**: list them, change their transports (the key, port and context stay), share or delete them, add new ones.
+- **No server at all**: the exit can be a small PHP program on ordinary web hosting.
+- **Self-updating nodes**: a node fetches new releases, checks them against `SHA256SUMS`, and rolls back if the new build does not start.
+- **This computer as an exit**: the *Exit node* mode makes the app a node that other clients connect through (L4, or L3 with WinDivert on Windows).
+
+### Also
+
+- **`openflux://` links and QR codes** carry a whole profile: transports, priorities, key, codec.
+- **Built-in browser** (off-screen Chromium via KCEF, about 230 MB, downloaded on first use) for the checks some services ask for, such as SmartCaptcha or a login wall.
+- **Core log** with debug levels, readable in the app.
+- **Updates** from GitHub releases, checked against the release's `SHA256SUMS.txt` and installed only when you agree.
+- **Optional account** at openflux.dev for subscriptions; everything above works without one.
 
 <!-- team:start -->
 ## What is new in the current release
 
-The release **3.9** carries the OpenFlux core 0.14 (unchanged since 3.8).
+The release **3.9** carries the OpenFlux core 0.14.0 (exit node `node-v1.7.0`).
 
-- **A new look.** The 2.x palette is back and richer: deep navy, one blue accent with soft light, motion on every control, the side column with the logo and the connection's card.
-- **The switch.** Home's button is the Moon that burns into the Sun, with the devices round it waking and joining the network: see [The switch](#the-switch).
-- From 3.8: **direct first** (a plain TCP connection to the node ahead of the documents while it is alive), **speed** work (large packets, pooled buffers, Reno on direct streams), **stripe groups** in the core, and **a restarted node is taken over at once**.
+- **Direct first**: a plain TCP connection to the node is used ahead of the document carriers while it is alive.
+- **Speed**: a 16000-byte tunnel MTU on direct with a fallback on ICMP "fragmentation needed", pooled send buffers, gated zstd (never over TLS on direct), Reno on direct streams.
+- **Stripe groups** in the core instead of the old bonding.
+- **A restarted node is taken over at once**: a restarted exit answers a client that is mid-session.
 
 The full list is in [CHANGELOG.md](CHANGELOG.md).
 <!-- team:end -->
@@ -84,7 +100,6 @@ Download the file for your system from the [releases page](../../releases/latest
 
 - The macOS builds are not signed: the first time, open the app with a right click → *Open*.
 - Full-tunnel mode needs administrator rights (a UAC prompt on Windows, the password on macOS). On Linux, point programs at the SOCKS5 proxy `127.0.0.1:1080` or the HTTP proxy `127.0.0.1:1081`.
-- The built-in browser (about 230 MB) is downloaded the first time it is needed.
 
 ## Build from source
 
@@ -112,27 +127,23 @@ The core binaries are not committed to git: `run` and `package*` build the one f
 ## Structure
 
 ```
-desktopApp/   Window, tray, shortcuts, packaging, icons
-shared/       Submodule: models, service interfaces, design system, screens
+desktopApp/   Window, tray, shortcuts, packaging
+shared/       Submodule: models, sessions, transports' settings, node wizard, screens
   jvmMain/
     core/     Core process launch, IPC status, Yandex checks
     node/     The node wizard (core --node-wizard over stdin/stdout)
     web/      The built-in browser: off-screen KCEF, a proxy router, a log
     platform/ Windows system proxy (WinInet), administrator rights
-    data/     Settings and profile storage
+    data/     Settings, profiles and installed JS transports
 OpenFlux/     Submodule: the core (CLI), started as a subprocess
 scripts/      build-core.sh
 ```
 
-The same screens run on Android in [OpenFluxAndroid](https://github.com/OpenFluxTeam/OpenFluxAndroid); both use the module [OpenFluxClientShared](https://github.com/OpenFluxTeam/OpenFluxClientShared).
-
-<p align="center">
-  <img src="docs/images/phones.png" alt="The same interface on a phone: Home, servers, a node, settings" width="860">
-</p>
+The Android client is [OpenFluxAndroid](https://github.com/OpenFluxTeam/OpenFluxAndroid); both use the module [OpenFluxClientShared](https://github.com/OpenFluxTeam/OpenFluxClientShared).
 
 ## Credits
 
-- **[meepo161](https://github.com/meepo161)** — author of [OpenFluxClient](https://github.com/meepo161/OpenFluxClient), the source of this app's UI and logic (`desktopApp/`, `shared/`): multi-transport sessions with failover, encryption, the built-in browser and check flow, the node wizard and the Compose design system. Thank you!
+- **[meepo161](https://github.com/meepo161)** — author of [OpenFluxClient](https://github.com/meepo161/OpenFluxClient), the source of this app's logic (`desktopApp/`, `shared/`): multi-transport sessions with failover, encryption, the built-in browser and check flow, the node wizard. Thank you!
 - **[p1neappleXpress](https://github.com/p1neappleXpress)** — author of the [OpenFlux](https://github.com/p1neappleXpress/OpenFlux) core this app bundles: the tunnel, the transports and the negotiation protocol.
 
 The previous, independent desktop client that lived in this repository is kept at the [`legacy-native-app`](../../tree/legacy-native-app) tag.
