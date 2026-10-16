@@ -20,6 +20,10 @@
 </p>
 
 <p align="center">
+  <a href="https://github.com/OpenFluxTeam/OpenFlux">Core</a> · <a href="https://github.com/OpenFluxTeam/OpenFluxDesktop">Desktop</a> · <a href="https://github.com/OpenFluxTeam/OpenFluxAndroid">Android</a> · <a href="https://testflight.apple.com/join/BwnAcdus">iOS (TestFlight; the App Store release is coming)</a>
+</p>
+
+<p align="center">
   <img src="docs/images/desktop-home.png" alt="OpenFlux on the desktop: the connect screen and the sidebar" width="860">
 </p>
 
