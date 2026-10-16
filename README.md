@@ -24,15 +24,28 @@
 </p>
 
 <p align="center">
-  <img src="docs/images/desktop-home.png" alt="OpenFlux on the desktop: the connect screen and the sidebar" width="860">
+  <img src="docs/images/desktop-home.png" alt="OpenFlux on the desktop, connected: the Sun in the middle of its network" width="860">
 </p>
 
 ## What it is
 
 OpenFluxDesktop is the desktop app of [OpenFlux](https://github.com/OpenFluxTeam/OpenFlux). It runs the OpenFlux core as a separate process and gives it a window, a tray icon and a setup wizard. Traffic goes through a **transport**: a document on a web service (Yandex, Mail.ru, cups.online, Avito, Telemost, MAX) or a plain TCP connection to your own node. A profile can hold several transports; the app switches between them by priority when one stops working.
 
+## The switch
+
+<p align="center">
+  <img src="docs/images/switch.gif" alt="The switch: the Moon cracks with fire and burns into the Sun, the devices wake and connect, then it all goes back" width="460">
+</p>
+
+The connect button is a small universe. While the app is off, the Moon turns slowly in the middle and phones, tablets, laptops and monitors drift round it with their screens dark. Press it: while the connection is being set up, the Moon's crust cracks with fire; once it is up, the Moon burns into the Sun, the screens light up as its light reaches them, the devices settle into orbits, and links of light join them to each other and to the Sun, with traffic running along them, faster when the connection carries more. Disconnect and it all plays back; a failed connection flares red. The Moon and the Sun are real: NASA's LRO map of the Moon and the Sun's surface seen by the Solar Dynamics Observatory, drawn by a shader on the GPU.
+
+<p align="center">
+  <img src="docs/images/home-states.png" alt="Home: off, connecting, connected" width="860">
+</p>
+
 ## Features
 
+- **A new look.** Deep navy and one blue accent, as in 2.x, with soft light and motion everywhere; dark and light themes.
 - **Full tunnel or a proxy.** All of the computer's traffic through Wintun (Windows) or utun (macOS), or a local SOCKS5 and HTTP proxy. Windows can also point the system proxy at it while connected.
 - **Several transports in one profile**, each with a priority and the network it may use. When the best one fails, the next takes over.
 - **Encryption.** AES-256-GCM end to end with a key you set; a profile with a key hides the traffic from the service that carries it.
@@ -43,7 +56,8 @@ OpenFluxDesktop is the desktop app of [OpenFlux](https://github.com/OpenFluxTeam
 - **Updates from GitHub releases**, checked against the release's `SHA256SUMS.txt`, installed only when you agree.
 
 <p align="center">
-  <img src="docs/images/desktop-servers.png" alt="The servers list on the desktop" width="860">
+  <img src="docs/images/desktop-light.png" alt="The light theme" width="49%">
+  <img src="docs/images/desktop-servers.png" alt="A server and its nodes" width="49%">
 </p>
 
 <!-- team:start -->
@@ -114,7 +128,7 @@ scripts/      build-core.sh
 The same screens run on Android in [OpenFluxAndroid](https://github.com/OpenFluxTeam/OpenFluxAndroid); both use the module [OpenFluxClientShared](https://github.com/OpenFluxTeam/OpenFluxClientShared).
 
 <p align="center">
-  <img src="docs/images/phones.png" alt="The same interface on a phone" width="780">
+  <img src="docs/images/phones.png" alt="The same interface on a phone: Home, servers, a node, settings" width="860">
 </p>
 
 ## Credits
