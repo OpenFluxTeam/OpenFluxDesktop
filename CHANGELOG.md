@@ -5,6 +5,17 @@ All notable changes to OpenFluxDesktop. Format loosely follows
 
 ## [Unreleased]
 
+## [3.9.3] - 2026-10-17 (OpenFluxTeam/OpenFluxDesktop)
+
+Core 0.14.2 / node-v1.7.2 (unchanged).
+
+### Fixed
+
+- The shared module's fix for Android 12 (the check for updates, the subscription and the bot no longer use a Java 11
+  call); the Desktop app itself is unchanged.
+- The tests that pass through Home no longer wait on its animated scene, which a slow macOS Intel build runner could not
+  finish in time (the release build there took 40 minutes and failed at random).
+
 ## [3.9.2] - 2026-10-17 (OpenFluxTeam/OpenFluxDesktop)
 
 Core 0.14.2 / node-v1.7.2.
