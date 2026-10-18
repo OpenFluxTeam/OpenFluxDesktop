@@ -56,7 +56,7 @@ class BrowserCloseKeepsWindowTest {
                     delay(3000)
                     inWindow = null
                     events += "document closed"
-                    // A Yandex check in the dialog, closed as submitCaptcha does.
+                    // A Yandex check in the dialog, closed as submitPrompt does.
                     val check = BuiltInBrowser.open("https://ya.ru/")
                     inDialog = check
                     delay(5000)
