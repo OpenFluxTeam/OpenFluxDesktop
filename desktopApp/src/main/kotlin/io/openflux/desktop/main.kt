@@ -11,7 +11,6 @@ import androidx.compose.ui.window.Notification
 import androidx.compose.ui.window.Tray
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.WindowState
-import androidx.compose.ui.window.application
 import androidx.compose.ui.window.rememberTrayState
 import io.openflux.desktop.data.AppDirs
 import io.openflux.desktop.model.isActive
@@ -74,7 +73,12 @@ fun main(args: Array<String>) {
     // says by itself, through the tray.
     val notifier = AccountNotifier(container.bot.state, container.bot::setNoticed, System::currentTimeMillis, offsetSeconds = { container.platform.utcOffsetSeconds })
     val shortcuts = Shortcuts()
-    application(exitProcessOnExit = true) {
+    // Settings → Внешний вид → «Анимации» off: every animation in the window takes no time (Compose reads the scale
+    // from the coroutine context its effects run in, and the window's context comes from the application's).
+    val motion = object : androidx.compose.ui.MotionDurationScale {
+        override val scaleFactor: Float get() = if (container.settings.settings.value.animations) 1f else 0f
+    }
+    kotlinx.coroutines.runBlocking(motion) { androidx.compose.ui.window.awaitApplication {
         val settings by container.settings.settings.collectAsState()
         val state by container.connection.state.collectAsState()
         var visible by remember { mutableStateOf(true) }
@@ -136,5 +140,6 @@ fun main(args: Array<String>) {
             LaunchedEffect(Unit) { window.minimumSize = Dimension(MIN_WINDOW.width.value.toInt(), MIN_WINDOW.height.value.toInt()) }
             OpenFluxApp(container, DesktopScrollbars, shortcuts, KcefBrowserViews)
         }
-    }
+    } }
+    exitProcess(0)
 }
