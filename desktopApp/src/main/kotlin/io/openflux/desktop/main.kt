@@ -72,7 +72,7 @@ fun main(args: Array<String>) {
 
     // What the bot used to send as messages (the end of the subscription, a paused connection, a payment) the app
     // says by itself, through the tray.
-    val notifier = AccountNotifier(container.bot.state, container.bot::setNoticed, System::currentTimeMillis) { container.platform.utcOffsetSeconds }
+    val notifier = AccountNotifier(container.bot.state, container.bot::setNoticed, System::currentTimeMillis, offsetSeconds = { container.platform.utcOffsetSeconds })
     val shortcuts = Shortcuts()
     application(exitProcessOnExit = true) {
         val settings by container.settings.settings.collectAsState()
