@@ -5,6 +5,15 @@ All notable changes to OpenFluxDesktop. Format loosely follows
 
 ## [Unreleased]
 
+## [3.10.3] - 2026-10-23 (OpenFluxTeam/OpenFluxDesktop)
+
+Core 0.15.1 / node-v1.8.1.
+
+### Changed
+
+- **The Клиент / Выходная нода switch is under the button** on Home (the connect switch, or «Запустить ноду» on the node's tab),
+  not above it.
+
 ## [3.10.2] - 2026-10-22 (OpenFluxTeam/OpenFluxDesktop)
 
 Core 0.15.1 / node-v1.8.1: update the nodes too.
