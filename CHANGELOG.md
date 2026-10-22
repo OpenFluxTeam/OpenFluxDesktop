@@ -5,6 +5,20 @@ All notable changes to OpenFluxDesktop. Format loosely follows
 
 ## [Unreleased]
 
+## [3.10.2] - 2026-10-22 (OpenFluxTeam/OpenFluxDesktop)
+
+Core 0.15.1 / node-v1.8.1: update the nodes too.
+
+### Fixed
+
+- **The built-in browser is no longer downloaded after every update.** It lived in the folder the app is installed in, which
+  the installer deletes when it replaces the old version; it is now in `%LOCALAPPDATA%\OpenFluxData`. Updating to this version
+  downloads it one last time.
+- **No incoming traffic after a node stood idle for hours (cups).** Fixed on the node (node-v1.8.1): its lanes no longer stall
+  after a client has been away.
+- **A client that moved to another network is served again in seconds (direct).** Fixed on the node (node-v1.8.1): it no
+  longer waits minutes on the client's old, half-open connection.
+
 ## [3.10.1] - 2026-10-22 (OpenFluxTeam/OpenFluxDesktop)
 
 Core 0.15.0 / node-v1.8.0 (unchanged).
