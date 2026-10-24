@@ -218,6 +218,9 @@ compose.desktop {
     application {
         mainClass = "io.openflux.desktop.MainKt"
         jvmArgs("-Dopenflux.version=$appVersion")
+        // Memory: G1 hands the heap it no longer uses back to the system every few seconds when idle, and keeps less
+        // spare (measured on Home's scene: 20–35 MB less resident than the default).
+        jvmArgs("-XX:+UseG1GC", "-XX:G1PeriodicGCInterval=5000", "-XX:MinHeapFreeRatio=10", "-XX:MaxHeapFreeRatio=30", "-XX:+UseStringDeduplication")
         // JCEF (the built-in browser) reaches into AWT internals.
         jvmArgs("--add-opens", "java.desktop/sun.awt=ALL-UNNAMED")
         jvmArgs("--add-opens", "java.desktop/java.awt.peer=ALL-UNNAMED")
