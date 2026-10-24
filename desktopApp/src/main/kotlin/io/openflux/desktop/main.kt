@@ -73,12 +73,7 @@ fun main(args: Array<String>) {
     // says by itself, through the tray.
     val notifier = AccountNotifier(container.bot.state, container.bot::setNoticed, System::currentTimeMillis, offsetSeconds = { container.platform.utcOffsetSeconds })
     val shortcuts = Shortcuts()
-    // Settings → Внешний вид → «Анимации» off: every animation in the window takes no time (Compose reads the scale
-    // from the coroutine context its effects run in, and the window's context comes from the application's).
-    val motion = object : androidx.compose.ui.MotionDurationScale {
-        override val scaleFactor: Float get() = if (container.settings.settings.value.animations) 1f else 0f
-    }
-    kotlinx.coroutines.runBlocking(motion) { androidx.compose.ui.window.awaitApplication {
+    kotlinx.coroutines.runBlocking { androidx.compose.ui.window.awaitApplication {
         val settings by container.settings.settings.collectAsState()
         val state by container.connection.state.collectAsState()
         var visible by remember { mutableStateOf(true) }

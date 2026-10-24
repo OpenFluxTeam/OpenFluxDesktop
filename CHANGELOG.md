@@ -5,6 +5,25 @@ All notable changes to OpenFluxDesktop. Format loosely follows
 
 ## [Unreleased]
 
+## [3.12.0] - 2026-10-24 (OpenFluxTeam/OpenFluxDesktop)
+
+Core 0.15.1 / node-v1.8.1 (unchanged).
+
+### Changed
+
+- **The connect button is the OpenFlux mark.** Off it is a round power button; connecting, its ring lights up; connected,
+  its core fills and eight rays reach out to four monitors and four phones, as on the logo. It moves only when the state
+  changes and stands still otherwise.
+- **The Moon and the Sun are a choice:** Settings → Внешний вид → «Кнопка подключения»: Логотип (the default) or Луна и
+  Солнце. The «Анимации» and «Простая кнопка подключения» switches are gone.
+- **The time connected reads «с 14:05»** instead of a ticking timer.
+
+### Performance
+
+- **The window is no longer redrawn all the time.** A status dot that pulsed asked for a frame at the screen's rate, and
+  every such frame redrew the whole window (with the Moon-and-Sun scene, ~28 % GPU with a running node). Status dots are
+  now still, nothing on Home ticks, and a QR code is drawn as one picture.
+
 ## [3.11.0] - 2026-10-24 (OpenFluxTeam/OpenFluxDesktop)
 
 Core 0.15.1 / node-v1.8.1 (unchanged).
