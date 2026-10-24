@@ -5,6 +5,16 @@ All notable changes to OpenFluxDesktop. Format loosely follows
 
 ## [Unreleased]
 
+## [3.12.1] - 2026-10-24 (OpenFluxTeam/OpenFluxDesktop)
+
+Core 0.15.1 / node-v1.8.1 (unchanged).
+
+### Changed
+
+- **The Moon and the Sun are gone.** Home always shows the OpenFlux mark, and Settings → Внешний вид no longer offers
+  «Кнопка подключения». The scene's code, its pictures and its tests are removed (about 2.3 thousand lines and 3 MB);
+  a choice saved by an older version is ignored.
+
 ## [3.12.0] - 2026-10-24 (OpenFluxTeam/OpenFluxDesktop)
 
 Core 0.15.1 / node-v1.8.1 (unchanged).
