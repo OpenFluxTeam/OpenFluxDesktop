@@ -3,6 +3,17 @@
 All notable changes to OpenFluxDesktop. Format loosely follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [3.13.1] - 2026-10-25 (OpenFluxTeam/OpenFluxDesktop)
+
+Core 0.16.0 / node-v1.8.2 (unchanged).
+
+### Fixed
+
+- **The update installer starts on a clean Windows.** An `.msi` is handed straight to `msiexec /i`, so no file
+  association or shell handler is involved; an `.exe` starts directly. If Windows refuses (for example, the setup
+  asks for elevation), PowerShell's `Start-Process` and then `cmd start` follow. A path with spaces or an apostrophe
+  stays one argument. If none of them works, the app still says where the file is for a manual start.
+
 ## [3.13.0] - 2026-10-25 (OpenFluxTeam/OpenFluxDesktop)
 
 Core 0.16.0 / node-v1.8.2: both peers need this core to use FluxFast. Nodes with auto-update take it on their next check.
