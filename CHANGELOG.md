@@ -3,7 +3,26 @@
 All notable changes to OpenFluxDesktop. Format loosely follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
-## [Unreleased]
+## [3.13.0] - 2026-10-25 (OpenFluxTeam/OpenFluxDesktop)
+
+Core 0.16.0 / node-v1.8.2: both peers need this core to use FluxFast. Nodes with auto-update take it on their next check.
+
+### Added
+
+- **FluxFast - UDP to a node.** A Session profile can add "FluxFast (UDP до ноды)" with the node's `host:port`: traffic
+  goes as datagrams instead of one TCP connection, so packet loss is left to the tunnel's own TCP and a client that
+  changes network (Wi-Fi to LTE, a new NAT mapping) is served again in seconds instead of reconnecting. On "Это
+  устройство" the exit listens on its own UDP port (8446 by default, under "Дополнительно"); like Direct it works in a
+  Session and both sides need the same key. The new transport is in the profile editor, share links and the exit's
+  details.
+
+### Fixed
+
+- **The update installer opens on Windows.** "Установить" used the shell's file handler, which can fail in a packaged
+  build; the downloaded `.exe`/`.msi` now starts directly, and an `.msi` falls back to PowerShell's `Start-Process`.
+- **A restarted FluxFast client is served again.** The exit's first packet after a restart is a path challenge; a client
+  that had no peer yet ignored it, so the exit never accepted its data. The client now answers the challenge from the
+  address it dialed, and the exit pings the proven path so the client sees the connection is live.
 
 ## [3.12.2] - 2026-10-24 (OpenFluxTeam/OpenFluxDesktop)
 
