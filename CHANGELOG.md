@@ -3,6 +3,18 @@
 All notable changes to OpenFluxDesktop. Format loosely follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [3.14.1] - 2026-10-26 (OpenFluxTeam/OpenFluxDesktop)
+
+Core 0.15.1 / node-v1.8.1: the clients are back on the core's `main`. Core 0.16.0 / node-v1.8.2 (FluxFast) is no longer used by the suite; nodes need nothing new, and no client writes a config that starts the carrier.
+
+### Removed
+
+- **FluxFast (UDP to a node) is removed.** It is gone from the transport list, the profile editor, share links, the exit's settings and its UDP port. A saved profile that used it loads with the default transport (Yandex Docs) and keeps its address: pick a transport again before connecting. Session carriers that used it load the same way; delete the ones you do not want.
+
+### Fixed
+
+- **A profile file with a transport this build does not know keeps the other profiles.** Before, one unknown transport failed the whole file: the list showed no profiles, and the next save overwrote them.
+
 ## [3.13.1] - 2026-10-25 (OpenFluxTeam/OpenFluxDesktop)
 
 Core 0.16.0 / node-v1.8.2 (unchanged).
